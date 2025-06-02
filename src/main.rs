@@ -10,7 +10,6 @@ mod user_interface;
 mod global_constants;
 
 use background_map::BackgroundMap;
-use custom::Point;
 use equipment::Gun;
 use global_constants::{GAME_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, FPS};
 use macroquad::ui::root_ui;
@@ -87,7 +86,7 @@ async fn main() {
             //run the logic here
             if pause_menu.resume && !gameover_menu.draw {
                 pause_menu.update();
-                
+
                 //update
                 player.update_pos(&mut bg_map);
                 player_gun.update_pos(&bg_map, &player);
