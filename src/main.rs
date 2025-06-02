@@ -12,7 +12,6 @@ mod inventory;
 mod items;
 
 use background_map::BackgroundMap;
-use custom::Point;
 use equipment::Gun;
 use global_constants::{GAME_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, FPS};
 use macroquad::ui::root_ui;
@@ -69,8 +68,6 @@ async fn main() {
     let mut enemies_generator = enemies::Generator::initialize().await;
     let mut item_generator = ItemGenerator::new();
 
-    let mut player_vel = Point {x: 0.0, y: 0.0};
-
     let font: Font = user_interface::initialize_font().await;
     let main_menu_ui = get_menu_skin(&font).await;
     let ui_skins = user_interface::UiSkins::new(&font);
@@ -92,11 +89,10 @@ async fn main() {
 
             //run the logic here
             if pause_menu.resume && !gameover_menu.draw {
-                player_vel = player.mov.register_keyboard_press(); // <= players movement is registered here
                 pause_menu.update();
 
                 //update
-                player.update_pos(&mut bg_map, &player_vel);
+                player.update_pos(&mut bg_map);
                 player_gun.update_pos(&bg_map, &player);
 
                 item_generator.update(5.0);
@@ -117,7 +113,7 @@ async fn main() {
             
             // draw
             bg_map.draw();
-            player.draw(&player_vel, !pause_menu.resume|| gameover_menu.draw);
+            player.draw( !pause_menu.resume|| gameover_menu.draw);
             player_gun.draw_gun(&bg_map, !pause_menu.resume|| gameover_menu.draw, main_menu.options.keybToShoot);
             player_gun.draw_projectiles(&bg_map);
             item_generator.draw(&bg_map);

@@ -109,7 +109,8 @@ impl Player {
         player
     }
 
-    pub fn update_pos(&mut self, map: &mut BackgroundMap, player_vel: &Point) {
+    pub fn update_pos(&mut self, map: &mut BackgroundMap) {
+        let player_vel = self.mov.register_keyboard_press();
         let pos =  self.pos.clone() + player_vel.clone();
 
         let screen_half_size_x = WINDOW_WIDTH/2.0 - self.size.x / 2.0;
@@ -160,10 +161,10 @@ impl Player {
     pub fn is_dead(&self) -> bool { self.hp <= 0. }
 
     //todo draw simple rects when the texture is unavailable
-    pub fn draw(&mut self, player_vel: &Point, pause: bool) {
+    pub fn draw(&mut self, pause: bool) {
         if self.texture.len() > 0 {
             let anim_index;
-            if player_vel.x == 0.0 && player_vel.y == 0.0 {
+            if self.mov.dir.point.x == 0.0 && self.mov.dir.point.y == 0.0 {
                 anim_index = 0;
             } else {
                 anim_index = 1;
@@ -181,7 +182,7 @@ impl Player {
                             source: Some(a1.frame().source_rect),
                             dest_size: Some(a1.frame().dest_size),
                             rotation: 0.0,
-                            flip_x: match player_vel.x { a => { if a < 0.0 {true} else {false} } },
+                            flip_x: match self.mov.dir.point.x { a => { if a < 0.0 {true} else {false} } },
                             flip_y: false,
                             pivot: None,
                         });
