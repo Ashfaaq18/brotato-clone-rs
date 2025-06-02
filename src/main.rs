@@ -8,6 +8,8 @@ mod equipment;
 mod collision;
 mod user_interface;
 mod global_constants;
+mod inventory;
+mod items;
 
 use background_map::BackgroundMap;
 use equipment::Gun;
@@ -15,6 +17,7 @@ use global_constants::{GAME_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, FPS};
 use macroquad::ui::root_ui;
 use player::Player;
 use user_interface::get_menu_skin;
+use items::ItemGenerator;
 use core::time;
 use std::{thread::sleep, time::SystemTime};
 use macroquad::prelude::*;
@@ -63,6 +66,7 @@ async fn main() {
     let mut gameover_menu = user_interface::GameOverMenu::initialize();
 
     let mut enemies_generator = enemies::Generator::initialize().await;
+    let mut item_generator = ItemGenerator::new();
 
     let font: Font = user_interface::initialize_font().await;
     let main_menu_ui = get_menu_skin(&font).await;
@@ -90,6 +94,10 @@ async fn main() {
                 //update
                 player.update_pos(&mut bg_map);
                 player_gun.update_pos(&bg_map, &player);
+
+                item_generator.update(5.0);
+                let collected = item_generator.collect_for_player(&player, &bg_map);
+                player.pickup_items(collected);
                 
                 for enemy in enemies_generator.current_enemies.iter_mut() {
                     enemy.chase(&player, &bg_map);
@@ -108,6 +116,7 @@ async fn main() {
             player.draw( !pause_menu.resume|| gameover_menu.draw);
             player_gun.draw_gun(&bg_map, !pause_menu.resume|| gameover_menu.draw, main_menu.options.keybToShoot);
             player_gun.draw_projectiles(&bg_map);
+            item_generator.draw(&bg_map);
             for enemy in enemies_generator.current_enemies.iter_mut() {
                 enemy.draw(&bg_map, !pause_menu.resume || gameover_menu.draw);
             }
@@ -118,7 +127,8 @@ async fn main() {
             
             user_interface::draw_health_bar(&player);
             user_interface::draw_kill_count(&font, enemies_generator.kill_count);
-
+            player.inventory.draw();
+            
             //pause menu
             if !pause_menu.resume {
                 user_interface::draw_opaque_background();

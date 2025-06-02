@@ -1,6 +1,7 @@
 use animation::{AnimatedSprite, Animation};
 use macroquad::prelude::*;
 use crate::{custom::{Direction, Point}, input::Movement, BackgroundMap, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::inventory::{Inventory, InventoryItem};
 
 const WIDTH: f32 = 40.0;
 const HEIGHT: f32 = 40.0;
@@ -15,6 +16,7 @@ pub struct Player {
     pub hp_reduction_cooldown_value: f32,
     sprite_sheet: Option<AnimatedSprite>,
     pub texture: Vec<Texture2D>,
+    pub inventory: Inventory,
 }
 
 impl Player {
@@ -43,6 +45,7 @@ impl Player {
             hp_reduction_cooldown_value: 0.5, //this is in seconds
             sprite_sheet: None,
             texture: vec![],
+            inventory: Inventory::new(),
         };
         
         match texture_paths {
@@ -199,11 +202,18 @@ impl Player {
         }
     }
 
+    pub fn pickup_items(&mut self, items: Vec<crate::items::Item>) {
+        for it in items {
+            self.inventory.add(InventoryItem { color: it.color });
+        }
+    }
+
     pub fn restart(&mut self) {
         self.hp = 100.;
         self.pos = Point {
             x: WINDOW_WIDTH/2.0 - WIDTH/2.0,
             y: WINDOW_HEIGHT/2.0 - HEIGHT/2.0,
-        }
+        };
+        self.inventory.items.clear();
     }
 }
