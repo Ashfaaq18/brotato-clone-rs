@@ -1,4 +1,4 @@
-use macroquad::input::{is_key_pressed, is_key_released, mouse_position, KeyCode};
+use macroquad::input::{is_key_down, is_key_pressed, is_key_released, mouse_position, KeyCode};
 use macroquad::time::get_frame_time;
 use crate::custom::{Direction, Point};
 
@@ -19,60 +19,22 @@ impl Movement {
     // 1 frame => 1 pixel * speed constant
     // (pixel * speed) per frame
     pub fn register_keyboard_press(&mut self) -> Point {
-        
-        //left
-        if is_key_pressed(KeyCode::A) {
-            self.dir.point.x += -1.0;
-            if self.dir.point.x < -1.0 {
-                self.dir.point.x = -1.0;
-            }
-        } else if is_key_released(KeyCode::A) {
-            self.dir.point.x += 1.0;
-            if self.dir.point.x > 1.0 {
-                self.dir.point.x = 1.0;
-            }
+
+        if is_key_down(KeyCode::A) { //left
+            self.dir.point.x = -1.0;
+        } else if is_key_down(KeyCode::D) { //right
+            self.dir.point.x = 1.0;
+        } else {
+            self.dir.point.x = 0.0;
         }
 
-        //right
-        if is_key_pressed(KeyCode::D) {
-            self.dir.point.x += 1.0;
-            if self.dir.point.x > 1.0 {
-                self.dir.point.x = 1.0;
-            }
-        } else if is_key_released(KeyCode::D) {
-            self.dir.point.x += -1.0;
-            if self.dir.point.x < -1.0 {
-                self.dir.point.x = -1.0;
-            }
-        }
-
-        //up
-        if is_key_pressed(KeyCode::W) {
-            self.dir.point.y += -1.0;
-            if self.dir.point.y < -1.0 {
-                self.dir.point.y = -1.0;
-            }
-        } else if is_key_released(KeyCode::W) {
-            self.dir.point.y += 1.0;
-            if self.dir.point.y > 1.0 {
-                self.dir.point.y = 1.0;
-            }
-        }
-
-        //down
-        if is_key_pressed(KeyCode::S) {
-            self.dir.point.y += 1.0;
-            if self.dir.point.y > 1.0 {
-                self.dir.point.y = 1.0;
-            }
-        } else if is_key_released(KeyCode::S) {
-            self.dir.point.y += -1.0;
-            if self.dir.point.y < -1.0 {
-                self.dir.point.y = -1.0;
-            }
-        }
-
-
+        if is_key_down(KeyCode::W) { //up
+            self.dir.point.y = -1.0;
+        } else if is_key_down(KeyCode::S) { //down
+            self.dir.point.y = 1.0;
+        } else {
+            self.dir.point.y = 0.0;
+        }        
 
         return self.dir.point.clone() * self.speed * get_frame_time();
     }   
