@@ -112,6 +112,10 @@ impl Generator {
         self.kill_count = 0;
         self.current_enemies.clear();
     }
+
+    pub fn clear_current_enemies(&mut self) {
+        self.current_enemies.clear();
+    }
 }
 
 // ///

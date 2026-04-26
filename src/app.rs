@@ -19,6 +19,7 @@ use crate::user_interface::{get_menu_skin, UiSkins};
 enum Screen {
     MainMenu,
     Playing,
+    Shop,
     Paused,
     GameOver,
 }
@@ -30,6 +31,7 @@ pub struct App {
     main_menu: user_interface::MainMenu,
     pause_menu: user_interface::PauseMenu,
     gameover_menu: user_interface::GameOverMenu,
+    wave_shop_menu: user_interface::WaveShopMenu,
     enemies_generator: enemies::Generator,
     item_generator: ItemGenerator,
     run_state: RunState,
@@ -81,6 +83,7 @@ impl App {
             main_menu: user_interface::MainMenu::initialize(),
             pause_menu: user_interface::PauseMenu::initialize(),
             gameover_menu: user_interface::GameOverMenu::initialize(),
+            wave_shop_menu: user_interface::WaveShopMenu::initialize(),
             enemies_generator: enemies::Generator::initialize().await,
             item_generator: ItemGenerator::new(),
             run_state: RunState::new(),
@@ -100,6 +103,7 @@ impl App {
         match self.screen {
             Screen::MainMenu => self.update_main_menu(),
             Screen::Playing => self.update_gameplay(),
+            Screen::Shop => {}
             Screen::Paused => {}
             Screen::GameOver => {}
         }
@@ -110,7 +114,7 @@ impl App {
     pub fn draw(&mut self) {
         match self.screen {
             Screen::MainMenu => self.draw_main_menu(),
-            Screen::Playing | Screen::Paused | Screen::GameOver => self.draw_run(),
+            Screen::Playing | Screen::Shop | Screen::Paused | Screen::GameOver => self.draw_run(),
         }
     }
 
@@ -126,6 +130,7 @@ impl App {
         self.pause_menu.restart = false;
         self.gameover_menu.mainmenu = false;
         self.gameover_menu.restart = false;
+        self.wave_shop_menu.reset();
     }
 
     fn update_main_menu(&mut self) {
@@ -140,7 +145,10 @@ impl App {
 
     fn update_gameplay(&mut self) {
         self.pause_menu.update();
-        self.run_state.update();
+        if self.run_state.update() {
+            self.enter_wave_shop();
+            return;
+        }
 
         self.player.update_pos(&mut self.bg_map);
         self.player_gun.update_pos(&self.bg_map, &self.player);
@@ -193,7 +201,9 @@ impl App {
     }
 
     fn draw_run(&mut self) {
-        let paused = self.screen == Screen::Paused || self.screen == Screen::GameOver;
+        let paused = self.screen == Screen::Shop
+            || self.screen == Screen::Paused
+            || self.screen == Screen::GameOver;
 
         self.bg_map.draw();
         self.player.draw(paused);
@@ -214,9 +224,39 @@ impl App {
         self.player.inventory.draw();
 
         match self.screen {
+            Screen::Shop => self.draw_wave_shop_menu(),
             Screen::Paused => self.draw_pause_menu(),
             Screen::GameOver => self.draw_gameover_menu(),
             _ => {}
+        }
+    }
+
+    fn enter_wave_shop(&mut self) {
+        self.enemies_generator.clear_current_enemies();
+        self.player_gun.clear();
+        self.item_generator.clear();
+        self.wave_shop_menu.reset();
+        self.screen = Screen::Shop;
+    }
+
+    fn draw_wave_shop_menu(&mut self) {
+        user_interface::draw_opaque_background();
+        self.wave_shop_menu.draw(&self.run_state);
+
+        if self.wave_shop_menu.continue_run {
+            self.run_state.start_next_wave();
+            self.wave_shop_menu.reset();
+            self.screen = Screen::Playing;
+        }
+
+        if self.wave_shop_menu.mainmenu {
+            self.reset_run();
+            self.main_menu.play = false;
+            self.screen = Screen::MainMenu;
+        }
+
+        if self.wave_shop_menu.quit {
+            self.quit_requested = true;
         }
     }
 

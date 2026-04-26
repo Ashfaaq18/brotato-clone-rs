@@ -20,12 +20,14 @@ impl RunState {
         }
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self) -> bool {
         self.wave_elapsed += get_frame_time();
-        if self.wave_elapsed >= WAVE_DURATION_SECONDS {
-            self.wave += 1;
-            self.wave_elapsed = 0.0;
-        }
+        self.wave_elapsed >= WAVE_DURATION_SECONDS
+    }
+
+    pub fn start_next_wave(&mut self) {
+        self.wave += 1;
+        self.wave_elapsed = 0.0;
     }
 
     pub fn add_materials(&mut self, amount: i32) {

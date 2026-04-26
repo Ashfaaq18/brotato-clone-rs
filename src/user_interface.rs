@@ -138,6 +138,54 @@ pub struct GameOverMenu {
     pub quit: bool,
 }
 
+pub struct WaveShopMenu {
+    pub continue_run: bool,
+    pub mainmenu: bool,
+    pub quit: bool,
+}
+
+impl WaveShopMenu {
+    pub fn initialize() -> WaveShopMenu {
+        return WaveShopMenu {
+            continue_run: false,
+            mainmenu: false,
+            quit: false,
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.continue_run = false;
+        self.mainmenu = false;
+        self.quit = false;
+    }
+
+    pub fn draw(&mut self, run_state: &RunState) {
+        let width = 360.0;
+        let height = 300.0;
+        let title = format!("Wave {} Complete", run_state.wave);
+        let size = root_ui().calc_size(&title);
+        root_ui().label(vec2(WINDOW_WIDTH / 2.0 - size.x / 2.0, 110.), &title);
+        root_ui().window(hash!(),
+        vec2(WINDOW_WIDTH / 2.0  - width/2.0, WINDOW_HEIGHT / 2.0 - height / 2.0 + 35.),
+        vec2(width, height), |ui| {
+
+            ui.label(vec2(70.0, 30.0), &format!("Materials: {}", run_state.materials));
+
+            self.continue_run = widgets::Button::new("Continue")
+                .position(vec2(70.0, 95.0))
+                .ui(ui);
+
+            self.mainmenu = widgets::Button::new("Main Menu")
+                .position(vec2(55.0, 165.0))
+                .ui(ui);
+
+            self.quit = widgets::Button::new("Quit")
+                .position(vec2(95.0, 235.0))
+                .ui(ui);
+        });
+    }
+}
+
 impl GameOverMenu {
     pub fn initialize() -> GameOverMenu {
         return GameOverMenu {
