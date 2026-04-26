@@ -14,7 +14,7 @@ pub struct MainMenu {
 }
 
 pub struct Options {
-    pub keybToShoot: bool,
+    pub keyboard_to_shoot: bool,
     pub here: bool,
 }
 
@@ -22,7 +22,7 @@ impl MainMenu {
     pub fn initialize() -> MainMenu {
         return MainMenu {
             play: false, 
-            options: Options { keybToShoot: false , here: false}, 
+            options: Options { keyboard_to_shoot: false , here: false}, 
             quit: false, 
             here: true,
             width: 300.0,
@@ -51,7 +51,7 @@ impl MainMenu {
             widgets::Checkbox::new(hash!())
                 .pos(vec2(-70.0, 50.0))
                 .label("keyb to shoot")
-                .ui(ui, &mut self.options.keybToShoot);
+                .ui(ui, &mut self.options.keyboard_to_shoot);
             ui.pop_skin();
             self.options.here = !widgets::Button::new("Back")
                 .position(vec2(75.0, 150.0))
