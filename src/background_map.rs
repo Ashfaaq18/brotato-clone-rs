@@ -1,9 +1,12 @@
+use crate::{
+    custom,
+    global_constants::{WINDOW_HEIGHT, WINDOW_WIDTH},
+};
 use macroquad::prelude::*;
-use crate::{custom, global_constants::{WINDOW_HEIGHT, WINDOW_WIDTH}};
 
 pub struct BackgroundMap {
     pub background_img: Texture2D,
-    pub pos: custom::Point
+    pub pos: custom::Point,
 }
 
 impl BackgroundMap {
@@ -22,8 +25,9 @@ impl BackgroundMap {
                 pos: custom::Point {
                     x: -1.0 * width / 2.0 + WINDOW_WIDTH / 2.0,
                     y: -1.0 * height / 2.0 + WINDOW_HEIGHT / 2.0,
-                }})
-        }
+                },
+            })
+        };
     }
 
     pub fn draw(&mut self) {
@@ -32,14 +36,36 @@ impl BackgroundMap {
             self.pos.x,
             self.pos.y,
             WHITE,
-            DrawTextureParams{
-                dest_size: Some(
-                    vec2(
+            DrawTextureParams {
+                dest_size: Some(vec2(
                     self.background_img.width(),
-                    self.background_img.height())
-                ),
+                    self.background_img.height(),
+                )),
                 ..Default::default()
-            }
+            },
         );
+    }
+
+    pub fn world_to_screen(&self, world_pos: custom::Point) -> custom::Point {
+        world_pos + self.pos
+    }
+
+    pub fn screen_to_world(&self, screen_pos: custom::Point) -> custom::Point {
+        screen_pos - self.pos
+    }
+
+    pub fn width(&self) -> f32 {
+        self.background_img.width()
+    }
+
+    pub fn height(&self) -> f32 {
+        self.background_img.height()
+    }
+
+    pub fn contains_world_point(&self, world_pos: custom::Point) -> bool {
+        world_pos.x >= 0.0
+            && world_pos.y >= 0.0
+            && world_pos.x <= self.width()
+            && world_pos.y <= self.height()
     }
 }

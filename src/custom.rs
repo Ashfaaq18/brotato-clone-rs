@@ -1,9 +1,15 @@
-use std::ops::{AddAssign, Mul, Add};
+use std::ops::{Add, AddAssign, Mul, Sub};
 
-#[derive(Clone)]
-pub struct Point{
+#[derive(Clone, Copy, Debug)]
+pub struct Point {
     pub x: f32,
     pub y: f32,
+}
+
+impl Point {
+    pub fn new(x: f32, y: f32) -> Self {
+        Self { x, y }
+    }
 }
 
 impl Mul<f32> for Point {
@@ -36,7 +42,17 @@ impl Add for Point {
     }
 }
 
+impl Sub for Point {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Direction {
-    pub point: Point
+    pub point: Point,
 }

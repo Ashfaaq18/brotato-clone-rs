@@ -101,8 +101,7 @@ impl Player {
                 self.pos.x += player_vel.x;
             }
             map.pos.x = 0.0;
-        } else if pos.x > screen_half_size_x + map.pos.x + map.background_img.width() - WINDOW_WIDTH
-        {
+        } else if pos.x > screen_half_size_x + map.pos.x + map.width() - WINDOW_WIDTH {
             if pos.x > WINDOW_WIDTH - self.size.x - WORLDBITSIZE {
                 //boundary
                 self.pos.x = WINDOW_WIDTH - self.size.x - WORLDBITSIZE;
@@ -122,9 +121,7 @@ impl Player {
                 self.pos.y += player_vel.y;
             }
             map.pos.y = 0.0;
-        } else if pos.y
-            > screen_half_size_y + map.pos.y + map.background_img.height() - WINDOW_HEIGHT
-        {
+        } else if pos.y > screen_half_size_y + map.pos.y + map.height() - WINDOW_HEIGHT {
             if pos.y > WINDOW_HEIGHT - self.size.y - WORLDBITSIZE {
                 //boundary
                 self.pos.y = WINDOW_HEIGHT - self.size.y - WORLDBITSIZE;
@@ -139,6 +136,10 @@ impl Player {
 
     pub fn is_dead(&self) -> bool {
         self.hp <= 0.
+    }
+
+    pub fn world_pos(&self, map: &BackgroundMap) -> Point {
+        map.screen_to_world(self.pos)
     }
 
     //todo draw simple rects when the texture is unavailable

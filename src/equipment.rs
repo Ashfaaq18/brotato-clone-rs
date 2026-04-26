@@ -1,6 +1,5 @@
 use crate::{
     custom::Point, global_constants::GUN_PROJECTILE_DAMAGE, input, player::Player, BackgroundMap,
-    WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 use macroquad::prelude::*;
 use std::f32::consts::PI;
@@ -69,22 +68,11 @@ impl Gun {
 
         //update projectile position (remove if it goes out of map bounds)
         self.projectiles.retain_mut(|proj| {
-            let screen_half_size_x = WINDOW_WIDTH / 2.0;
-            let screen_half_size_y = WINDOW_HEIGHT / 2.0;
             proj.pos.x =
                 proj.pos.x + proj.params.rotation.cos() * self.projectile_speed * get_frame_time();
             proj.pos.y =
                 proj.pos.y + proj.params.rotation.sin() * self.projectile_speed * get_frame_time();
-            if (proj.pos.x - bg_map.pos.x - screen_half_size_x) > bg_map.background_img.width()
-                || (proj.pos.y - bg_map.pos.y - screen_half_size_y) > bg_map.background_img.height()
-                || (proj.pos.x - bg_map.pos.x) < 0.0
-                || (proj.pos.y - bg_map.pos.y) < 0.0
-            {
-                //info!("removed projectile");
-                false //remove this
-            } else {
-                true //retain this
-            }
+            bg_map.contains_world_point(proj.pos)
         });
     }
 
@@ -136,11 +124,13 @@ impl Gun {
                 && (self.time_count > 1.0 / self.rate_of_fire)
                 && !pause
             {
+                let projectile_screen_pos = Point {
+                    x: x + self.size.x * theta.cos(),
+                    y: y + self.size.y * theta.sin(),
+                };
+                let projectile_world_pos = bg_map.screen_to_world(projectile_screen_pos);
                 self.projectiles.push(Projectile {
-                    pos: Point {
-                        x: x - bg_map.pos.x + self.size.x * theta.cos(),
-                        y: y - bg_map.pos.y + self.size.y * theta.sin(),
-                    },
+                    pos: projectile_world_pos,
                     size: Point { x: 0.0, y: 0.0 },
                     damage: GUN_PROJECTILE_DAMAGE,
                     params: params.clone(),
@@ -178,12 +168,13 @@ impl Gun {
 
     pub fn draw_projectiles(&mut self, bg_map: &BackgroundMap) {
         for proj in self.projectiles.iter() {
+            let screen_pos = bg_map.world_to_screen(proj.pos);
             match &self.projectile_texture {
                 Some(a) => {
                     draw_texture_ex(
                         &a,
-                        proj.pos.x + bg_map.pos.x - a.width() / 2.0,
-                        proj.pos.y + bg_map.pos.y - a.height() / 2.0,
+                        screen_pos.x - a.width() / 2.0,
+                        screen_pos.y - a.height() / 2.0,
                         WHITE,
                         DrawTextureParams {
                             ..Default::default()
@@ -192,8 +183,8 @@ impl Gun {
                 }
                 None => {
                     draw_rectangle_ex(
-                        proj.pos.x + bg_map.pos.x,
-                        proj.pos.y + bg_map.pos.y,
+                        screen_pos.x,
+                        screen_pos.y,
                         proj.size.x,
                         proj.size.y,
                         proj.params.clone(),

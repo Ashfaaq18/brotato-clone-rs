@@ -1,12 +1,16 @@
 use std::f32::consts::PI;
 
 use crate::{
-    assets::SpriteSheetSpec, background_map::BackgroundMap, collision::Collision, custom::Point,
-    equipment::Projectile, global_constants::ENEMY_CONTACT_DAMAGE, player::Player,
+    assets::SpriteSheetSpec,
+    background_map::BackgroundMap,
+    collision::{aabb_from_pos_size, padded_aabb_from_pos_size, Collision},
+    custom::Point,
+    equipment::Projectile,
+    global_constants::ENEMY_CONTACT_DAMAGE,
+    player::Player,
 };
 use animation::AnimatedSprite;
 use macroquad::prelude::*;
-use parry2d::{bounding_volume::Aabb, na::Point2};
 
 // enemy ai
 // move towards the player
@@ -94,20 +98,8 @@ impl Enemy {
         //collision with projectiles
         projectiles.retain(|proj| {
             if (Collision {
-                obj1: Aabb {
-                    mins: Point2::new(
-                        self.pos.x + self.hitbox_padding,
-                        self.pos.y + self.hitbox_padding,
-                    ),
-                    maxs: Point2::new(
-                        self.pos.x + self.size.x - self.hitbox_padding,
-                        self.pos.y + self.size.y - self.hitbox_padding,
-                    ),
-                },
-                obj2: Aabb {
-                    mins: Point2::new(proj.pos.x, proj.pos.y),
-                    maxs: Point2::new(proj.pos.x + proj.size.x, proj.pos.y + proj.size.y),
-                },
+                obj1: padded_aabb_from_pos_size(self.pos, self.size, self.hitbox_padding),
+                obj2: aabb_from_pos_size(proj.pos, proj.size),
             }
             .intersect())
             {
@@ -120,24 +112,10 @@ impl Enemy {
         });
 
         //collision with player
+        let player_world_pos = player.world_pos(bg_map);
         if (Collision {
-            obj1: Aabb {
-                mins: Point2::new(
-                    self.pos.x + self.hitbox_padding,
-                    self.pos.y + self.hitbox_padding,
-                ),
-                maxs: Point2::new(
-                    self.pos.x + self.size.x - self.hitbox_padding,
-                    self.pos.y + self.size.y - self.hitbox_padding,
-                ),
-            },
-            obj2: Aabb {
-                mins: Point2::new(player.pos.x - bg_map.pos.x, player.pos.y - bg_map.pos.y),
-                maxs: Point2::new(
-                    player.pos.x - bg_map.pos.x + player.size.x,
-                    player.pos.y - bg_map.pos.y + player.size.y,
-                ),
-            },
+            obj1: padded_aabb_from_pos_size(self.pos, self.size, self.hitbox_padding),
+            obj2: aabb_from_pos_size(player_world_pos, player.size),
         }
         .intersect())
         {
@@ -154,11 +132,11 @@ impl Enemy {
 
     //simple chase algorithm (follows the player)
     pub fn chase(&mut self, player: &Player, bg_map: &BackgroundMap) {
-        let pos_x = self.pos.x + bg_map.pos.x;
-        let pos_y = self.pos.y + bg_map.pos.y;
+        let player_world_pos = player.world_pos(bg_map);
 
-        let mut theta = ((player.pos.y - pos_y) / (player.pos.x - pos_x)).atan();
-        if player.pos.x - pos_x < 0.0 {
+        let mut theta =
+            ((player_world_pos.y - self.pos.y) / (player_world_pos.x - self.pos.x)).atan();
+        if player_world_pos.x - self.pos.x < 0.0 {
             theta = theta - PI;
             self.flip_x = true;
         } else {
@@ -173,6 +151,7 @@ impl Enemy {
 
     //todo draw simple rects when the texture is unavailable
     pub fn draw(&mut self, bg_map: &BackgroundMap, pause: bool) {
+        let screen_pos = bg_map.world_to_screen(self.pos);
         if self.texture.len() > 0 {
             match &mut self.sprite_sheet {
                 Some(a1) => {
@@ -181,8 +160,8 @@ impl Enemy {
                     if !self.hp_changed {
                         draw_texture_ex(
                             &self.texture[anim_index],
-                            self.pos.x + bg_map.pos.x,
-                            self.pos.y + bg_map.pos.y,
+                            screen_pos.x,
+                            screen_pos.y,
                             WHITE,
                             DrawTextureParams {
                                 source: Some(a1.frame().source_rect),
@@ -202,8 +181,8 @@ impl Enemy {
                 }
                 None => {
                     draw_rectangle(
-                        self.pos.x + bg_map.pos.x,
-                        self.pos.y + bg_map.pos.y,
+                        screen_pos.x,
+                        screen_pos.y,
                         self.size.x,
                         self.size.y,
                         self.color,
@@ -212,8 +191,8 @@ impl Enemy {
             }
         } else {
             draw_rectangle(
-                self.pos.x + bg_map.pos.x,
-                self.pos.y + bg_map.pos.y,
+                screen_pos.x,
+                screen_pos.y,
                 self.size.x,
                 self.size.y,
                 self.color,
