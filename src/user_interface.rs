@@ -36,12 +36,12 @@ impl MainMenu {
         }
     }
 
-    pub fn draw(&mut self) {
+    pub fn draw(&mut self, options_skin: &Skin) {
         let size = root_ui().calc_size(&GAME_TITLE);
         root_ui().label(vec2(WINDOW_WIDTH / 2.0 - size.x / 2.0, 120.), GAME_TITLE);
         match self.here {
             MainMenuScreen::Main => self.draw_main_menu(),
-            MainMenuScreen::Options => self.draw_options_menu(),
+            MainMenuScreen::Options => self.draw_options_menu(options_skin),
         }
     }
 
@@ -65,22 +65,32 @@ impl MainMenu {
         });
     }
 
-    fn draw_options_menu(&mut self) {
-        root_ui().window(hash!(), 
-        vec2(WINDOW_WIDTH / 2.0  - self.width/2.0, WINDOW_HEIGHT / 2.0 - self.height / 2.0 + 20.), 
-        vec2(self.width, self.height), |ui| {
+    fn draw_options_menu(&mut self, options_skin: &Skin) {
+        let width = 460.0;
+        let height = 280.0;
 
-            ui.label(vec2(55.0, 30.0), "Aim Direction");
+        root_ui().push_skin(options_skin);
+        root_ui().window(hash!(), 
+        vec2(WINDOW_WIDTH / 2.0  - width/2.0, WINDOW_HEIGHT / 2.0 - height / 2.0 + 35.), 
+        vec2(width, height), |ui| {
+
+            let title = "Aim Direction";
+            let title_size = ui.calc_size(title);
+            ui.label(vec2(width / 2.0 - title_size.x / 2.0, 30.0), title);
 
             if widgets::Button::new("Mouse")
-                .position(vec2(40.0, 80.0))
+                .position(vec2(55.0, 90.0))
+                .size(vec2(160.0, 52.0))
+                .selected(self.aim_mode == AimMode::Mouse)
                 .ui(ui)
             {
                 self.aim_mode = AimMode::Mouse;
             }
 
             if widgets::Button::new("Keyboard")
-                .position(vec2(150.0, 80.0))
+                .position(vec2(245.0, 90.0))
+                .size(vec2(160.0, 52.0))
+                .selected(self.aim_mode == AimMode::Keyboard)
                 .ui(ui)
             {
                 self.aim_mode = AimMode::Keyboard;
@@ -90,10 +100,12 @@ impl MainMenu {
                 AimMode::Mouse => "Selected: Mouse",
                 AimMode::Keyboard => "Selected: Keyboard",
             };
-            ui.label(vec2(45.0, 125.0), selected_mode);
+            let selected_size = ui.calc_size(selected_mode);
+            ui.label(vec2(width / 2.0 - selected_size.x / 2.0, 160.0), selected_mode);
 
             let back = widgets::Button::new("Back")
-                .position(vec2(75.0, 170.0))
+                .position(vec2(width / 2.0 - 80.0, 215.0))
+                .size(vec2(160.0, 52.0))
                 .ui(ui);
 
             if back {
@@ -101,6 +113,7 @@ impl MainMenu {
                 self.here = MainMenuScreen::Main;
             }
         });
+        root_ui().pop_skin();
     }
 }
 
@@ -330,13 +343,21 @@ pub fn draw_health_bar(player: &Player) {
 }
 
 pub async fn get_menu_skin(font : &Font) -> Skin {
+    build_menu_skin(font, 50, 30)
+}
+
+pub async fn get_options_skin(font : &Font) -> Skin {
+    build_menu_skin(font, 28, 24)
+}
+
+fn build_menu_skin(font: &Font, label_font_size: u16, button_font_size: u16) -> Skin {
     return {
         let label_style = root_ui()
             .style_builder()
             .with_font(&font)
             .unwrap()
             .text_color(Color::from_rgba(180, 180, 120, 255))
-            .font_size(50)
+            .font_size(label_font_size)
             .build();
 
         let window_style = root_ui()
@@ -372,7 +393,7 @@ pub async fn get_menu_skin(font : &Font) -> Skin {
             .with_font(&font)
             .unwrap()
             .text_color(Color::from_rgba(40, 40, 40, 255))
-            .font_size(30)
+            .font_size(button_font_size)
             .build();
 
         let editbox_style = root_ui()

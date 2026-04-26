@@ -13,7 +13,7 @@ use crate::items::ItemGenerator;
 use crate::player::Player;
 use crate::run_state::RunState;
 use crate::user_interface;
-use crate::user_interface::get_menu_skin;
+use crate::user_interface::{get_menu_skin, get_options_skin};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Screen {
@@ -37,6 +37,7 @@ pub struct App {
     run_state: RunState,
     font: Font,
     _main_menu_ui: macroquad::ui::Skin,
+    options_ui: macroquad::ui::Skin,
     screen: Screen,
     quit_requested: bool,
 }
@@ -71,6 +72,7 @@ impl App {
 
         let font = user_interface::initialize_font().await;
         let main_menu_ui = get_menu_skin(&font).await;
+        let options_ui = get_options_skin(&font).await;
         root_ui().push_skin(&main_menu_ui);
 
         Some(Self {
@@ -86,6 +88,7 @@ impl App {
             run_state: RunState::new(),
             font,
             _main_menu_ui: main_menu_ui,
+            options_ui,
             screen: Screen::MainMenu,
             quit_requested: false,
         })
@@ -185,7 +188,7 @@ impl App {
 
     fn draw_main_menu(&mut self) {
         self.bg_map.draw();
-        self.main_menu.draw();
+        self.main_menu.draw(&self.options_ui);
 
         if self.main_menu.play {
             self.screen = Screen::Playing;
