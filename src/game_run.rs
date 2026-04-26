@@ -2,12 +2,9 @@ use macroquad::prelude::*;
 
 use crate::assets::{paths, sprites};
 use crate::background_map::BackgroundMap;
+use crate::combat::Combat;
 use crate::enemies;
-use crate::equipment::Gun;
-use crate::global_constants::{
-    GUN_INITIAL_TIME_COUNT, GUN_PROJECTILE_SPEED, GUN_RATE_OF_FIRE, ITEM_SPAWN_FREQUENCY_SECONDS,
-    PLAYER_SPEED,
-};
+use crate::global_constants::{ITEM_SPAWN_FREQUENCY_SECONDS, PLAYER_SPEED};
 use crate::items::ItemGenerator;
 use crate::player::Player;
 use crate::run_state::RunState;
@@ -24,7 +21,7 @@ pub enum RunEvent {
 pub struct GameRun {
     bg_map: BackgroundMap,
     player: Player,
-    player_gun: Gun,
+    combat: Combat,
     enemies_generator: enemies::Generator,
     item_generator: ItemGenerator,
     run_state: RunState,
@@ -46,20 +43,12 @@ impl GameRun {
         )
         .await;
 
-        let player_gun = Gun::initialize(
-            player.size.clone(),
-            GUN_PROJECTILE_SPEED,
-            GUN_RATE_OF_FIRE,
-            GUN_INITIAL_TIME_COUNT,
-            paths::GUN,
-            paths::BULLET,
-        )
-        .await;
+        let combat = Combat::initialize(player.size.clone(), paths::GUN, paths::BULLET).await;
 
         Some(Self {
             bg_map,
             player,
-            player_gun,
+            combat,
             enemies_generator: enemies::Generator::initialize().await,
             item_generator: ItemGenerator::new(),
             run_state: RunState::new(),
@@ -72,8 +61,8 @@ impl GameRun {
         }
 
         self.player.update_pos(&mut self.bg_map);
-        self.player_gun
-            .update(&self.bg_map, &self.player, settings.aim_mode, false);
+        self.combat
+            .update(&self.bg_map, &self.player, settings.aim_mode);
 
         self.item_generator.update(ITEM_SPAWN_FREQUENCY_SECONDS);
         let collected = self
@@ -86,7 +75,7 @@ impl GameRun {
         for enemy in self.enemies_generator.current_enemies.iter_mut() {
             enemy.chase(&self.player, &self.bg_map);
             enemy.detect_collision(
-                &mut self.player_gun.projectiles,
+                self.combat.projectiles_mut(),
                 &mut self.player,
                 &self.bg_map,
             );
@@ -109,8 +98,7 @@ impl GameRun {
     pub fn draw(&mut self, font: &Font, _settings: &Settings, paused: bool) {
         self.bg_map.draw();
         self.player.draw(paused);
-        self.player_gun.draw(&self.bg_map);
-        self.player_gun.draw_projectiles(&self.bg_map);
+        self.combat.draw(&self.bg_map);
         self.item_generator.draw(&self.bg_map);
         for enemy in self.enemies_generator.current_enemies.iter_mut() {
             enemy.draw(&self.bg_map, paused);
@@ -124,7 +112,7 @@ impl GameRun {
 
     pub fn reset(&mut self) {
         self.enemies_generator.clear();
-        self.player_gun.clear();
+        self.combat.clear();
         self.player.restart();
         self.item_generator.clear();
         self.run_state.reset();
@@ -132,7 +120,7 @@ impl GameRun {
 
     pub fn enter_shop(&mut self) {
         self.enemies_generator.clear_current_enemies();
-        self.player_gun.clear();
+        self.combat.clear();
         self.item_generator.clear();
     }
 

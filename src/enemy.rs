@@ -4,8 +4,8 @@ use crate::{
     assets::SpriteSheetSpec,
     background_map::BackgroundMap,
     collision::{aabb_from_pos_size, padded_aabb_from_pos_size, Collision},
+    combat::Projectiles,
     custom::Point,
-    equipment::Projectile,
     global_constants::ENEMY_CONTACT_DAMAGE,
     player::Player,
 };
@@ -91,25 +91,20 @@ impl Enemy {
 
     pub fn detect_collision(
         &mut self,
-        projectiles: &mut Vec<Projectile>,
+        projectiles: &mut Projectiles,
         player: &mut Player,
         bg_map: &BackgroundMap,
     ) {
         //collision with projectiles
-        projectiles.retain(|proj| {
-            if (Collision {
-                obj1: padded_aabb_from_pos_size(self.pos, self.size, self.hitbox_padding),
-                obj2: aabb_from_pos_size(proj.pos, proj.size),
-            }
-            .intersect())
-            {
-                self.hp = self.hp - proj.damage;
-                self.hp_changed = true;
-                return false;
-            } else {
-                return true;
-            }
-        });
+        let damage = projectiles.damage_colliding_with(padded_aabb_from_pos_size(
+            self.pos,
+            self.size,
+            self.hitbox_padding,
+        ));
+        if damage > 0.0 {
+            self.hp = self.hp - damage;
+            self.hp_changed = true;
+        }
 
         //collision with player
         let player_world_pos = player.world_pos(bg_map);
