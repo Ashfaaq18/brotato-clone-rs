@@ -1,4 +1,5 @@
 mod app;
+mod assets;
 mod background_map;
 mod collision;
 mod custom;

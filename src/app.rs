@@ -1,9 +1,14 @@
 use macroquad::prelude::*;
 use macroquad::ui::root_ui;
 
+use crate::assets::{paths, sprites};
 use crate::background_map::BackgroundMap;
 use crate::enemies;
 use crate::equipment::Gun;
+use crate::global_constants::{
+    ENEMY_SPAWN_COUNT, ENEMY_SPAWN_FREQUENCY_SECONDS, GUN_INITIAL_TIME_COUNT, GUN_PROJECTILE_SPEED,
+    GUN_RATE_OF_FIRE, ITEM_SPAWN_FREQUENCY_SECONDS, PLAYER_SPEED,
+};
 use crate::items::ItemGenerator;
 use crate::player::Player;
 use crate::user_interface;
@@ -37,7 +42,7 @@ impl App {
     pub async fn initialize() -> Option<Self> {
         info!("Initializing modules");
 
-        let bg_map = match BackgroundMap::initialize("assets/background_map.png").await {
+        let bg_map = match BackgroundMap::initialize(paths::BACKGROUND_MAP).await {
             Some(bg_map) => bg_map,
             None => {
                 info!("couldnt load background");
@@ -46,21 +51,18 @@ impl App {
         };
 
         let player = Player::initialize(
-            100.0,
-            Some(&[
-                "assets\\topdown_shooter_assets\\sPlayerIdle_strip4.png",
-                "assets\\topdown_shooter_assets\\sPlayerRun_strip7.png",
-            ]),
+            PLAYER_SPEED,
+            Some(&[sprites::PLAYER_IDLE, sprites::PLAYER_RUN]),
         )
         .await;
 
         let player_gun = Gun::initialize(
             player.size.clone(),
-            300.0,
-            3.0,
-            0.0,
-            "assets\\topdown_shooter_assets\\sGun.png",
-            "assets\\topdown_shooter_assets\\sBullet.png",
+            GUN_PROJECTILE_SPEED,
+            GUN_RATE_OF_FIRE,
+            GUN_INITIAL_TIME_COUNT,
+            paths::GUN,
+            paths::BULLET,
         )
         .await;
 
@@ -137,7 +139,7 @@ impl App {
         self.player.update_pos(&mut self.bg_map);
         self.player_gun.update_pos(&self.bg_map, &self.player);
 
-        self.item_generator.update(5.0);
+        self.item_generator.update(ITEM_SPAWN_FREQUENCY_SECONDS);
         let collected = self
             .item_generator
             .collect_for_player(&self.player, &self.bg_map);
@@ -152,7 +154,8 @@ impl App {
             );
         }
 
-        self.enemies_generator.update(4.0, 2);
+        self.enemies_generator
+            .update(ENEMY_SPAWN_FREQUENCY_SECONDS, ENEMY_SPAWN_COUNT);
         if self.player.is_dead() {
             self.gameover_menu.draw = true;
         }

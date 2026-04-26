@@ -1,6 +1,7 @@
 use macroquad::prelude::*;
 use macroquad::ui::{hash, root_ui, widgets, Skin};
 
+use crate::assets::paths;
 use crate::global_constants::{GAME_TITLE, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::player::Player;
 
@@ -173,7 +174,7 @@ impl GameOverMenu {
 }
 
 pub async fn initialize_font() -> Font {
-    return load_ttf_font("assets/ui_assets/The Bomb Sound.ttf")
+    return load_ttf_font(paths::UI_FONT)
     .await
     .unwrap();
 }
