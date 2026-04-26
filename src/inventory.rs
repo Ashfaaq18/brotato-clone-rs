@@ -1,5 +1,5 @@
+use crate::global_constants::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use macroquad::prelude::*;
-use crate::global_constants::{WINDOW_WIDTH, WINDOW_HEIGHT};
 
 #[derive(Clone)]
 pub struct InventoryItem {

@@ -66,10 +66,20 @@ impl Gun {
         }
     }
 
-    pub fn update_pos(&mut self, bg_map: &BackgroundMap, player: &Player) {
+    pub fn update(
+        &mut self,
+        bg_map: &BackgroundMap,
+        player: &Player,
+        aim_mode: AimMode,
+        paused: bool,
+    ) {
         //update gun position
         self.pos.x = player.pos.x;
         self.pos.y = player.pos.y;
+
+        if paused {
+            return;
+        }
 
         //update projectile position (remove if it goes out of map bounds)
         self.projectiles.retain_mut(|proj| {
@@ -79,47 +89,14 @@ impl Gun {
                 proj.pos.y + proj.params.rotation.sin() * self.projectile_speed * get_frame_time();
             bg_map.contains_world_point(proj.pos)
         });
-    }
 
-    pub fn draw_gun(&mut self, bg_map: &BackgroundMap, pause: bool, aim_mode: AimMode) {
-        //draw gun
-        self.size.x = self.size.x * 1.2;
-        self.size.y = self.size.y / 4.0;
+        let (x, y, theta, params) = self.gun_draw_state(aim_mode);
 
-        match &self.texture {
-            Some(a) => {
-                self.size.x = a.width();
-                self.size.y = a.height();
-            }
-            None => {}
-        }
-
-        let mut x: f32 = self.pos.x + (self.size.x / 2.0);
-        let mut y = self.pos.y + self.size.y / 2.0;
-
-        let aim_direction = match aim_mode {
-            AimMode::Mouse => input::get_cursor_pos() - Point { x, y },
-            AimMode::Keyboard => input::get_keyboard_aim_direction().unwrap_or(self.aim_direction),
-        };
-
-        if aim_direction.x != 0.0 || aim_direction.y != 0.0 {
-            self.aim_direction = aim_direction;
-        }
-        let theta = self.aim_direction.y.atan2(self.aim_direction.x);
-
-        x = x + theta.cos();
-        y = y + theta.sin() + self.size.y / 2.0;
-
-        let params = DrawRectangleParams {
-            offset: Vec2 { x: 0.0, y: 0.5 },
-            rotation: theta,
-            color: DARKBROWN,
-        };
-
-        if self.time_count > 1.0 / self.rate_of_fire && !pause {
+        if self.time_count > 1.0 / self.rate_of_fire {
+            let (draw_width, draw_height) = self.draw_size();
             let projectile_screen_pos = Point {
-                x: x + self.size.x * theta.cos(),
-                y: y + self.size.y * theta.sin(),
+                x: x + draw_width * theta.cos(),
+                y: y + draw_height * theta.sin(),
             };
             let projectile_world_pos = bg_map.screen_to_world(projectile_screen_pos);
             self.projectiles.push(Projectile {
@@ -132,6 +109,20 @@ impl Gun {
         }
 
         self.time_count += get_frame_time();
+    }
+
+    pub fn draw(&self, _bg_map: &BackgroundMap) {
+        //draw gun
+        let (draw_width, draw_height) = self.draw_size();
+        let theta = self.aim_direction.y.atan2(self.aim_direction.x);
+        let x = self.pos.x + (draw_width / 2.0) + theta.cos();
+        let y = self.pos.y + draw_height / 2.0 + theta.sin() + draw_height / 2.0;
+
+        let params = DrawRectangleParams {
+            offset: Vec2 { x: 0.0, y: 0.5 },
+            rotation: theta,
+            color: DARKBROWN,
+        };
 
         match &self.texture {
             Some(a) => {
@@ -151,12 +142,45 @@ impl Gun {
                 );
             }
             None => {
-                draw_rectangle_ex(x, y, self.size.x, self.size.y, params);
+                draw_rectangle_ex(x, y, draw_width, draw_height, params);
             }
         }
     }
 
-    pub fn draw_projectiles(&mut self, bg_map: &BackgroundMap) {
+    fn gun_draw_state(&mut self, aim_mode: AimMode) -> (f32, f32, f32, DrawRectangleParams) {
+        let (draw_width, draw_height) = self.draw_size();
+        let mut x: f32 = self.pos.x + (draw_width / 2.0);
+        let mut y = self.pos.y + draw_height / 2.0;
+        let aim_direction = match aim_mode {
+            AimMode::Mouse => input::get_cursor_pos() - Point { x, y },
+            AimMode::Keyboard => input::get_keyboard_aim_direction().unwrap_or(self.aim_direction),
+        };
+
+        if aim_direction.x != 0.0 || aim_direction.y != 0.0 {
+            self.aim_direction = aim_direction;
+        }
+        let theta = self.aim_direction.y.atan2(self.aim_direction.x);
+
+        x = x + theta.cos();
+        y = y + theta.sin() + draw_height / 2.0;
+
+        let params = DrawRectangleParams {
+            offset: Vec2 { x: 0.0, y: 0.5 },
+            rotation: theta,
+            color: DARKBROWN,
+        };
+
+        (x, y, theta, params)
+    }
+
+    fn draw_size(&self) -> (f32, f32) {
+        match &self.texture {
+            Some(texture) => (texture.width(), texture.height()),
+            None => (self.size.x * 1.2, self.size.y / 4.0),
+        }
+    }
+
+    pub fn draw_projectiles(&self, bg_map: &BackgroundMap) {
         for proj in self.projectiles.iter() {
             let screen_pos = bg_map.world_to_screen(proj.pos);
             match &self.projectile_texture {

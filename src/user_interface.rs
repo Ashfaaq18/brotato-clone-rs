@@ -6,12 +6,12 @@ use crate::global_constants::{GAME_TITLE, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::input::AimMode;
 use crate::player::Player;
 use crate::run_state::RunState;
+use crate::settings::Settings;
 
 pub struct MainMenu {
     pub play: bool,
     pub quit: bool,
     pub options: bool,
-    pub aim_mode: AimMode,
     pub width: f32,
     pub height: f32,
     here: MainMenuScreen,
@@ -26,93 +26,105 @@ enum MainMenuScreen {
 impl MainMenu {
     pub fn initialize() -> MainMenu {
         return MainMenu {
-            play: false, 
-            quit: false, 
+            play: false,
+            quit: false,
             options: false,
-            aim_mode: AimMode::Mouse,
             width: 300.0,
             height: 250.0,
             here: MainMenuScreen::Main,
-        }
+        };
     }
 
-    pub fn draw(&mut self, options_skin: &Skin) {
+    pub fn draw(&mut self, options_skin: &Skin, settings: &mut Settings) {
         let size = root_ui().calc_size(&GAME_TITLE);
         root_ui().label(vec2(WINDOW_WIDTH / 2.0 - size.x / 2.0, 120.), GAME_TITLE);
         match self.here {
             MainMenuScreen::Main => self.draw_main_menu(),
-            MainMenuScreen::Options => self.draw_options_menu(options_skin),
+            MainMenuScreen::Options => self.draw_options_menu(options_skin, settings),
         }
     }
 
     fn draw_main_menu(&mut self) {
-        root_ui().window(hash!(), 
-        vec2(WINDOW_WIDTH / 2.0  - self.width/2.0, WINDOW_HEIGHT / 2.0 - self.height / 2.0 + 20.), 
-        vec2(self.width, self.height), |ui| {
-
-            self.play = widgets::Button::new("Play")
-                .position(vec2(75.0, 30.0))
-                .ui(ui);
-            self.options = widgets::Button::new("Options")
-                .position(vec2(55.0, 100.0))
-                .ui(ui);
-            self.quit = widgets::Button::new("Quit")
-                .position(vec2(75.0, 170.0))
-                .ui(ui);
-            if self.options {
-                self.here = MainMenuScreen::Options;
-            }
-        });
+        root_ui().window(
+            hash!(),
+            vec2(
+                WINDOW_WIDTH / 2.0 - self.width / 2.0,
+                WINDOW_HEIGHT / 2.0 - self.height / 2.0 + 20.,
+            ),
+            vec2(self.width, self.height),
+            |ui| {
+                self.play = widgets::Button::new("Play")
+                    .position(vec2(75.0, 30.0))
+                    .ui(ui);
+                self.options = widgets::Button::new("Options")
+                    .position(vec2(55.0, 100.0))
+                    .ui(ui);
+                self.quit = widgets::Button::new("Quit")
+                    .position(vec2(75.0, 170.0))
+                    .ui(ui);
+                if self.options {
+                    self.here = MainMenuScreen::Options;
+                }
+            },
+        );
     }
 
-    fn draw_options_menu(&mut self, options_skin: &Skin) {
+    fn draw_options_menu(&mut self, options_skin: &Skin, settings: &mut Settings) {
         let width = 460.0;
         let height = 280.0;
 
         root_ui().push_skin(options_skin);
-        root_ui().window(hash!(), 
-        vec2(WINDOW_WIDTH / 2.0  - width/2.0, WINDOW_HEIGHT / 2.0 - height / 2.0 + 35.), 
-        vec2(width, height), |ui| {
+        root_ui().window(
+            hash!(),
+            vec2(
+                WINDOW_WIDTH / 2.0 - width / 2.0,
+                WINDOW_HEIGHT / 2.0 - height / 2.0 + 35.,
+            ),
+            vec2(width, height),
+            |ui| {
+                let title = "Aim Direction";
+                let title_size = ui.calc_size(title);
+                ui.label(vec2(width / 2.0 - title_size.x / 2.0, 30.0), title);
 
-            let title = "Aim Direction";
-            let title_size = ui.calc_size(title);
-            ui.label(vec2(width / 2.0 - title_size.x / 2.0, 30.0), title);
+                if widgets::Button::new("Mouse")
+                    .position(vec2(55.0, 90.0))
+                    .size(vec2(160.0, 52.0))
+                    .selected(settings.aim_mode == AimMode::Mouse)
+                    .ui(ui)
+                {
+                    settings.aim_mode = AimMode::Mouse;
+                }
 
-            if widgets::Button::new("Mouse")
-                .position(vec2(55.0, 90.0))
-                .size(vec2(160.0, 52.0))
-                .selected(self.aim_mode == AimMode::Mouse)
-                .ui(ui)
-            {
-                self.aim_mode = AimMode::Mouse;
-            }
+                if widgets::Button::new("Keyboard")
+                    .position(vec2(245.0, 90.0))
+                    .size(vec2(160.0, 52.0))
+                    .selected(settings.aim_mode == AimMode::Keyboard)
+                    .ui(ui)
+                {
+                    settings.aim_mode = AimMode::Keyboard;
+                }
 
-            if widgets::Button::new("Keyboard")
-                .position(vec2(245.0, 90.0))
-                .size(vec2(160.0, 52.0))
-                .selected(self.aim_mode == AimMode::Keyboard)
-                .ui(ui)
-            {
-                self.aim_mode = AimMode::Keyboard;
-            }
+                let selected_mode = match settings.aim_mode {
+                    AimMode::Mouse => "Selected: Mouse",
+                    AimMode::Keyboard => "Selected: Keyboard",
+                };
+                let selected_size = ui.calc_size(selected_mode);
+                ui.label(
+                    vec2(width / 2.0 - selected_size.x / 2.0, 160.0),
+                    selected_mode,
+                );
 
-            let selected_mode = match self.aim_mode {
-                AimMode::Mouse => "Selected: Mouse",
-                AimMode::Keyboard => "Selected: Keyboard",
-            };
-            let selected_size = ui.calc_size(selected_mode);
-            ui.label(vec2(width / 2.0 - selected_size.x / 2.0, 160.0), selected_mode);
+                let back = widgets::Button::new("Back")
+                    .position(vec2(width / 2.0 - 80.0, 215.0))
+                    .size(vec2(160.0, 52.0))
+                    .ui(ui);
 
-            let back = widgets::Button::new("Back")
-                .position(vec2(width / 2.0 - 80.0, 215.0))
-                .size(vec2(160.0, 52.0))
-                .ui(ui);
-
-            if back {
-                self.options = false;
-                self.here = MainMenuScreen::Main;
-            }
-        });
+                if back {
+                    self.options = false;
+                    self.here = MainMenuScreen::Main;
+                }
+            },
+        );
         root_ui().pop_skin();
     }
 }
@@ -131,7 +143,7 @@ impl PauseMenu {
             restart: false,
             mainmenu: false,
             quit: false,
-        }
+        };
     }
 
     pub fn update(&mut self) {
@@ -143,27 +155,31 @@ impl PauseMenu {
     pub fn draw(&mut self) {
         let width = 300.0;
         let height = 300.0;
-        root_ui().window(hash!(), 
-        vec2(WINDOW_WIDTH / 2.0  - width/2.0, WINDOW_HEIGHT / 2.0 - height / 2.0 + 20.), 
-        vec2(width, height), |ui| {
-    
-            self.resume = widgets::Button::new("Resume")
-                .position(vec2(55.0, 30.0))
-                .ui(ui);
+        root_ui().window(
+            hash!(),
+            vec2(
+                WINDOW_WIDTH / 2.0 - width / 2.0,
+                WINDOW_HEIGHT / 2.0 - height / 2.0 + 20.,
+            ),
+            vec2(width, height),
+            |ui| {
+                self.resume = widgets::Button::new("Resume")
+                    .position(vec2(55.0, 30.0))
+                    .ui(ui);
 
-            self.restart = widgets::Button::new("Restart")
-                .position(vec2(50.0, 100.0))
-                .ui(ui);
-    
-            self.mainmenu = widgets::Button::new("Main Menu")
-                .position(vec2(30.0, 170.0))
-                .ui(ui);
+                self.restart = widgets::Button::new("Restart")
+                    .position(vec2(50.0, 100.0))
+                    .ui(ui);
 
-            self.quit = widgets::Button::new("Quit")
-                .position(vec2(75.0, 240.0))
-                .ui(ui);
+                self.mainmenu = widgets::Button::new("Main Menu")
+                    .position(vec2(30.0, 170.0))
+                    .ui(ui);
 
-        });
+                self.quit = widgets::Button::new("Quit")
+                    .position(vec2(75.0, 240.0))
+                    .ui(ui);
+            },
+        );
     }
 }
 
@@ -186,7 +202,7 @@ impl WaveShopMenu {
             continue_run: false,
             mainmenu: false,
             quit: false,
-        }
+        };
     }
 
     pub fn reset(&mut self) {
@@ -201,24 +217,32 @@ impl WaveShopMenu {
         let title = format!("Wave {} Complete", run_state.wave);
         let size = root_ui().calc_size(&title);
         root_ui().label(vec2(WINDOW_WIDTH / 2.0 - size.x / 2.0, 110.), &title);
-        root_ui().window(hash!(),
-        vec2(WINDOW_WIDTH / 2.0  - width/2.0, WINDOW_HEIGHT / 2.0 - height / 2.0 + 35.),
-        vec2(width, height), |ui| {
+        root_ui().window(
+            hash!(),
+            vec2(
+                WINDOW_WIDTH / 2.0 - width / 2.0,
+                WINDOW_HEIGHT / 2.0 - height / 2.0 + 35.,
+            ),
+            vec2(width, height),
+            |ui| {
+                ui.label(
+                    vec2(70.0, 30.0),
+                    &format!("Materials: {}", run_state.materials),
+                );
 
-            ui.label(vec2(70.0, 30.0), &format!("Materials: {}", run_state.materials));
+                self.continue_run = widgets::Button::new("Continue")
+                    .position(vec2(70.0, 95.0))
+                    .ui(ui);
 
-            self.continue_run = widgets::Button::new("Continue")
-                .position(vec2(70.0, 95.0))
-                .ui(ui);
+                self.mainmenu = widgets::Button::new("Main Menu")
+                    .position(vec2(55.0, 165.0))
+                    .ui(ui);
 
-            self.mainmenu = widgets::Button::new("Main Menu")
-                .position(vec2(55.0, 165.0))
-                .ui(ui);
-
-            self.quit = widgets::Button::new("Quit")
-                .position(vec2(95.0, 235.0))
-                .ui(ui);
-        });
+                self.quit = widgets::Button::new("Quit")
+                    .position(vec2(95.0, 235.0))
+                    .ui(ui);
+            },
+        );
     }
 }
 
@@ -229,7 +253,7 @@ impl GameOverMenu {
             restart: false,
             mainmenu: false,
             quit: false,
-        }
+        };
     }
 
     pub fn draw(&mut self) {
@@ -238,52 +262,70 @@ impl GameOverMenu {
         let game_over = "Game Over!";
         let size = root_ui().calc_size(&game_over);
         root_ui().label(vec2(WINDOW_WIDTH / 2.0 - size.x / 2.0, 120.), game_over);
-        root_ui().window(hash!(), 
-        vec2(WINDOW_WIDTH / 2.0  - width/2.0, WINDOW_HEIGHT / 2.0 - height / 2.0 + 40.), 
-        vec2(width, height), |ui| {
-    
-            self.restart = widgets::Button::new("Restart")
-                .position(vec2(50.0, 40.0))
-                .ui(ui);
-    
-            self.mainmenu = widgets::Button::new("Main Menu")
-                .position(vec2(30.0, 110.0))
-                .ui(ui);
+        root_ui().window(
+            hash!(),
+            vec2(
+                WINDOW_WIDTH / 2.0 - width / 2.0,
+                WINDOW_HEIGHT / 2.0 - height / 2.0 + 40.,
+            ),
+            vec2(width, height),
+            |ui| {
+                self.restart = widgets::Button::new("Restart")
+                    .position(vec2(50.0, 40.0))
+                    .ui(ui);
 
-            self.quit = widgets::Button::new("Quit")
-                .position(vec2(75.0, 180.0))
-                .ui(ui);
+                self.mainmenu = widgets::Button::new("Main Menu")
+                    .position(vec2(30.0, 110.0))
+                    .ui(ui);
 
-        });
+                self.quit = widgets::Button::new("Quit")
+                    .position(vec2(75.0, 180.0))
+                    .ui(ui);
+            },
+        );
     }
 }
 
 pub async fn initialize_font() -> Font {
-    return load_ttf_font(paths::UI_FONT)
-    .await
-    .unwrap();
+    return load_ttf_font(paths::UI_FONT).await.unwrap();
 }
 
 pub fn draw_opaque_background() {
-    draw_rectangle_ex(0.0, 0.0, WINDOW_WIDTH, WINDOW_HEIGHT, DrawRectangleParams {
-        offset: vec2(0.0, 0.0),
-        rotation: 0.0,
-        color: Color { r: 0.0, g: 0.0, b: 0.0, a: 0.5  },
-    })
+    draw_rectangle_ex(
+        0.0,
+        0.0,
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        DrawRectangleParams {
+            offset: vec2(0.0, 0.0),
+            rotation: 0.0,
+            color: Color {
+                r: 0.0,
+                g: 0.0,
+                b: 0.0,
+                a: 0.5,
+            },
+        },
+    )
 }
 
-pub fn draw_kill_count(font : &Font, enemy_kill_count: i32) {
+pub fn draw_kill_count(font: &Font, enemy_kill_count: i32) {
     let mut edited_str = "Kill count: ".to_owned();
     edited_str.push_str(&enemy_kill_count.to_string());
     //root_ui()
-    draw_text_ex(&edited_str, WINDOW_WIDTH - 250., 30., TextParams{
-        font: Some(font),
-        font_size: 32,
-        font_scale: 1.,
-        font_scale_aspect: 1.,
-        rotation: 0.,
-        color: ORANGE,
-    });
+    draw_text_ex(
+        &edited_str,
+        WINDOW_WIDTH - 250.,
+        30.,
+        TextParams {
+            font: Some(font),
+            font_size: 32,
+            font_scale: 1.,
+            font_scale_aspect: 1.,
+            rotation: 0.,
+            color: ORANGE,
+        },
+    );
 }
 
 pub fn draw_run_stats(font: &Font, run_state: &RunState) {
@@ -292,28 +334,37 @@ pub fn draw_run_stats(font: &Font, run_state: &RunState) {
         run_state.wave,
         run_state.wave_time_remaining().ceil() as i32
     );
-    draw_text_ex(&wave_text, WINDOW_WIDTH / 2.0 - 120.0, 30., TextParams{
-        font: Some(font),
-        font_size: 32,
-        font_scale: 1.,
-        font_scale_aspect: 1.,
-        rotation: 0.,
-        color: ORANGE,
-    });
+    draw_text_ex(
+        &wave_text,
+        WINDOW_WIDTH / 2.0 - 120.0,
+        30.,
+        TextParams {
+            font: Some(font),
+            font_size: 32,
+            font_scale: 1.,
+            font_scale_aspect: 1.,
+            rotation: 0.,
+            color: ORANGE,
+        },
+    );
 
     let material_text = format!("Materials: {}", run_state.materials);
-    draw_text_ex(&material_text, 10., 70., TextParams{
-        font: Some(font),
-        font_size: 28,
-        font_scale: 1.,
-        font_scale_aspect: 1.,
-        rotation: 0.,
-        color: ORANGE,
-    });
+    draw_text_ex(
+        &material_text,
+        10.,
+        70.,
+        TextParams {
+            font: Some(font),
+            font_size: 28,
+            font_scale: 1.,
+            font_scale_aspect: 1.,
+            rotation: 0.,
+            color: ORANGE,
+        },
+    );
 }
 
 pub fn draw_health_bar(player: &Player) {
-
     let full_size_w = 140.0;
     let size_w;
 
@@ -328,25 +379,47 @@ pub fn draw_health_bar(player: &Player) {
     let origin_x = 10.0;
     let origin_y = 10.0;
     //border
-    draw_rectangle_ex(origin_x, origin_y, full_size_w + border_padding * 2.0, size_h + border_padding * 2.0, DrawRectangleParams {
-        offset: vec2(0.0, 0.0),
-        rotation: 0.0,
-        color: Color { r: 0., g: 0., b: 0., a: 1.  },
-    });
+    draw_rectangle_ex(
+        origin_x,
+        origin_y,
+        full_size_w + border_padding * 2.0,
+        size_h + border_padding * 2.0,
+        DrawRectangleParams {
+            offset: vec2(0.0, 0.0),
+            rotation: 0.0,
+            color: Color {
+                r: 0.,
+                g: 0.,
+                b: 0.,
+                a: 1.,
+            },
+        },
+    );
 
     //health bar
-    draw_rectangle_ex(origin_x + border_padding, origin_y + border_padding, size_w, size_h, DrawRectangleParams {
-        offset: vec2(0.0, 0.0),
-        rotation: 0.0,
-        color: Color { r: 0.55, g: 0.16, b: 0.16, a: 1.  },
-    });
+    draw_rectangle_ex(
+        origin_x + border_padding,
+        origin_y + border_padding,
+        size_w,
+        size_h,
+        DrawRectangleParams {
+            offset: vec2(0.0, 0.0),
+            rotation: 0.0,
+            color: Color {
+                r: 0.55,
+                g: 0.16,
+                b: 0.16,
+                a: 1.,
+            },
+        },
+    );
 }
 
-pub async fn get_menu_skin(font : &Font) -> Skin {
+pub async fn get_menu_skin(font: &Font) -> Skin {
     build_menu_skin(font, 50, 30)
 }
 
-pub async fn get_options_skin(font : &Font) -> Skin {
+pub async fn get_options_skin(font: &Font) -> Skin {
     build_menu_skin(font, 28, 24)
 }
 
@@ -362,7 +435,11 @@ fn build_menu_skin(font: &Font, label_font_size: u16, button_font_size: u16) -> 
 
         let window_style = root_ui()
             .style_builder()
-            .background(Image::gen_image_color(250, 250, Color::from_rgba(64, 165, 120, 200)))
+            .background(Image::gen_image_color(
+                250,
+                250,
+                Color::from_rgba(64, 165, 120, 200),
+            ))
             .build();
 
         let button_style = root_ui()

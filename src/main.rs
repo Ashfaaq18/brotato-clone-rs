@@ -6,12 +6,14 @@ mod custom;
 mod enemies;
 mod enemy;
 mod equipment;
+mod game_run;
 mod global_constants;
 mod input;
 mod inventory;
 mod items;
 mod player;
 mod run_state;
+mod settings;
 mod user_interface;
 
 use app::App;
