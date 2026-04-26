@@ -1,6 +1,6 @@
 use crate::{
     custom::Point,
-    global_constants::{WINDOW_HEIGHT, WINDOW_WIDTH},
+    global_constants::{MATERIAL_VALUE, WINDOW_HEIGHT, WINDOW_WIDTH},
     player::Player,
     BackgroundMap,
 };
@@ -12,6 +12,7 @@ pub struct Item {
     pub pos: Point,
     pub size: Point,
     pub color: Color,
+    pub material_value: i32,
 }
 
 pub struct ItemGenerator {
@@ -29,18 +30,33 @@ impl ItemGenerator {
 
     fn spawn_random(&mut self) {
         let mut rng = thread_rng();
-        let size = Point { x: 20.0, y: 20.0 };
         let pos: Point = Point {
             x: rng.gen_range(20.0..(WINDOW_WIDTH - 20.0)),
             y: rng.gen_range(20.0..(WINDOW_HEIGHT - 20.0)),
         };
+        self.spawn_material_at(pos);
+    }
+
+    pub fn spawn_material_at(&mut self, pos: Point) {
+        let size = Point { x: 20.0, y: 20.0 };
         let color = Color {
             r: 0.55,
             g: 0.16,
             b: 0.16,
             a: 1.,
         };
-        self.items.push(Item { pos, size, color });
+        self.items.push(Item {
+            pos,
+            size,
+            color,
+            material_value: MATERIAL_VALUE,
+        });
+    }
+
+    pub fn spawn_materials_at(&mut self, positions: Vec<Point>) {
+        for pos in positions {
+            self.spawn_material_at(pos);
+        }
     }
 
     pub fn update(&mut self, frequency: f32) {
@@ -76,5 +92,10 @@ impl ItemGenerator {
             }
         });
         collected
+    }
+
+    pub fn clear(&mut self) {
+        self.items.clear();
+        self.counter = 0.0;
     }
 }

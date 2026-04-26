@@ -6,11 +6,12 @@ use crate::background_map::BackgroundMap;
 use crate::enemies;
 use crate::equipment::Gun;
 use crate::global_constants::{
-    ENEMY_SPAWN_COUNT, ENEMY_SPAWN_FREQUENCY_SECONDS, GUN_INITIAL_TIME_COUNT, GUN_PROJECTILE_SPEED,
-    GUN_RATE_OF_FIRE, ITEM_SPAWN_FREQUENCY_SECONDS, PLAYER_SPEED,
+    GUN_INITIAL_TIME_COUNT, GUN_PROJECTILE_SPEED, GUN_RATE_OF_FIRE, ITEM_SPAWN_FREQUENCY_SECONDS,
+    PLAYER_SPEED,
 };
 use crate::items::ItemGenerator;
 use crate::player::Player;
+use crate::run_state::RunState;
 use crate::user_interface;
 use crate::user_interface::{get_menu_skin, UiSkins};
 
@@ -31,6 +32,7 @@ pub struct App {
     gameover_menu: user_interface::GameOverMenu,
     enemies_generator: enemies::Generator,
     item_generator: ItemGenerator,
+    run_state: RunState,
     font: Font,
     _main_menu_ui: macroquad::ui::Skin,
     ui_skins: UiSkins,
@@ -81,6 +83,7 @@ impl App {
             gameover_menu: user_interface::GameOverMenu::initialize(),
             enemies_generator: enemies::Generator::initialize().await,
             item_generator: ItemGenerator::new(),
+            run_state: RunState::new(),
             font,
             _main_menu_ui: main_menu_ui,
             ui_skins,
@@ -115,6 +118,8 @@ impl App {
         self.enemies_generator.clear();
         self.player_gun.clear();
         self.player.restart();
+        self.item_generator.clear();
+        self.run_state.reset();
         self.gameover_menu.draw = false;
         self.pause_menu.mainmenu = false;
         self.pause_menu.resume = true;
@@ -135,6 +140,7 @@ impl App {
 
     fn update_gameplay(&mut self) {
         self.pause_menu.update();
+        self.run_state.update();
 
         self.player.update_pos(&mut self.bg_map);
         self.player_gun.update_pos(&self.bg_map, &self.player);
@@ -143,6 +149,8 @@ impl App {
         let collected = self
             .item_generator
             .collect_for_player(&self.player, &self.bg_map);
+        let material_count = collected.iter().map(|item| item.material_value).sum();
+        self.run_state.add_materials(material_count);
         self.player.pickup_items(collected);
 
         for enemy in self.enemies_generator.current_enemies.iter_mut() {
@@ -154,8 +162,12 @@ impl App {
             );
         }
 
-        self.enemies_generator
-            .update(ENEMY_SPAWN_FREQUENCY_SECONDS, ENEMY_SPAWN_COUNT);
+        let material_drop_positions = self.enemies_generator.update(
+            self.run_state.enemy_spawn_frequency(),
+            self.run_state.enemy_spawn_count(),
+        );
+        self.item_generator
+            .spawn_materials_at(material_drop_positions);
         if self.player.is_dead() {
             self.gameover_menu.draw = true;
         }
@@ -198,6 +210,7 @@ impl App {
 
         user_interface::draw_health_bar(&self.player);
         user_interface::draw_kill_count(&self.font, self.enemies_generator.kill_count);
+        user_interface::draw_run_stats(&self.font, &self.run_state);
         self.player.inventory.draw();
 
         match self.screen {

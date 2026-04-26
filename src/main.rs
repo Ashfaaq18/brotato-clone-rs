@@ -11,6 +11,7 @@ mod input;
 mod inventory;
 mod items;
 mod player;
+mod run_state;
 mod user_interface;
 
 use app::App;

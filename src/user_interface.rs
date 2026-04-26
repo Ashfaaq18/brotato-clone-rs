@@ -4,6 +4,7 @@ use macroquad::ui::{hash, root_ui, widgets, Skin};
 use crate::assets::paths;
 use crate::global_constants::{GAME_TITLE, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::player::Player;
+use crate::run_state::RunState;
 
 pub struct MainMenu {
     pub play: bool,
@@ -194,6 +195,32 @@ pub fn draw_kill_count(font : &Font, enemy_kill_count: i32) {
     draw_text_ex(&edited_str, WINDOW_WIDTH - 250., 30., TextParams{
         font: Some(font),
         font_size: 32,
+        font_scale: 1.,
+        font_scale_aspect: 1.,
+        rotation: 0.,
+        color: ORANGE,
+    });
+}
+
+pub fn draw_run_stats(font: &Font, run_state: &RunState) {
+    let wave_text = format!(
+        "Wave: {}  Time: {}",
+        run_state.wave,
+        run_state.wave_time_remaining().ceil() as i32
+    );
+    draw_text_ex(&wave_text, WINDOW_WIDTH / 2.0 - 120.0, 30., TextParams{
+        font: Some(font),
+        font_size: 32,
+        font_scale: 1.,
+        font_scale_aspect: 1.,
+        rotation: 0.,
+        color: ORANGE,
+    });
+
+    let material_text = format!("Materials: {}", run_state.materials);
+    draw_text_ex(&material_text, 10., 70., TextParams{
+        font: Some(font),
+        font_size: 28,
         font_scale: 1.,
         font_scale_aspect: 1.,
         rotation: 0.,

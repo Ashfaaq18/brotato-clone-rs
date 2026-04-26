@@ -84,11 +84,13 @@ impl Generator {
     }
 
     ///make sure count is always above 1
-    pub fn update(&mut self, frequency: f32, count: i32) {
+    pub fn update(&mut self, frequency: f32, count: i32) -> Vec<Point> {
         //remove enemy if hp is 0 or below
+        let mut killed_enemy_positions = Vec::new();
         self.current_enemies.retain(|enemy| {
             if enemy.hp <= 0.0 {
                 self.kill_count += 1;
+                killed_enemy_positions.push(enemy.pos);
                 return false;
             } else {
                 return true;
@@ -102,6 +104,8 @@ impl Generator {
             self.generate(rand::thread_rng().gen_range(count - 1..count + 1) as i32);
             self.counter = 0.;
         }
+
+        killed_enemy_positions
     }
 
     pub fn clear(&mut self) {
