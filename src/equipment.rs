@@ -76,7 +76,7 @@ impl Gun {
         });
     }
 
-    pub fn draw_gun(&mut self, bg_map: &BackgroundMap, pause: bool, keyb_to_shoot: bool) {
+    pub fn draw_gun(&mut self, bg_map: &BackgroundMap, pause: bool) {
         //draw gun
         self.size.x = self.size.x * 1.2;
         self.size.y = self.size.y / 4.0;
@@ -92,53 +92,39 @@ impl Gun {
         let mut x: f32 = self.pos.x + (self.size.x / 2.0);
         let mut y = self.pos.y + self.size.y / 2.0;
 
-        let mut theta = 0.0;
-        let mut params = DrawRectangleParams {
+        let point_to_pos = input::get_cursor_pos();
+        let dis =
+            f32::sqrt(f32::powf(point_to_pos.x - x, 2.0) + f32::powf(point_to_pos.y - y, 2.0));
+        let mut theta = ((point_to_pos.y - y) / dis).acos();
+
+        if point_to_pos.x < x {
+            theta = PI / 2.0 + theta;
+        } else {
+            theta = PI / 2.0 - theta;
+        }
+
+        x = x + theta.cos();
+        y = y + theta.sin() + self.size.y / 2.0;
+
+        let params = DrawRectangleParams {
             offset: Vec2 { x: 0.0, y: 0.5 },
-            rotation: 0.0,
+            rotation: theta,
             color: DARKBROWN,
         };
 
-        if !keyb_to_shoot {
-            let point_to_pos = input::get_cursor_pos();
-            let dis =
-                f32::sqrt(f32::powf(point_to_pos.x - x, 2.0) + f32::powf(point_to_pos.y - y, 2.0));
-            theta = ((point_to_pos.y - y) / dis).acos();
-
-            if point_to_pos.x < x {
-                theta = PI / 2.0 + theta;
-            } else {
-                theta = PI / 2.0 - theta;
-            }
-
-            x = x + theta.cos();
-            y = y + theta.sin() + self.size.y / 2.0;
-
-            params = DrawRectangleParams {
-                offset: Vec2 { x: 0.0, y: 0.5 },
-                rotation: theta,
-                color: DARKBROWN,
+        if self.time_count > 1.0 / self.rate_of_fire && !pause {
+            let projectile_screen_pos = Point {
+                x: x + self.size.x * theta.cos(),
+                y: y + self.size.y * theta.sin(),
             };
-
-            if is_mouse_button_down(macroquad::input::MouseButton::Left)
-                && (self.time_count > 1.0 / self.rate_of_fire)
-                && !pause
-            {
-                let projectile_screen_pos = Point {
-                    x: x + self.size.x * theta.cos(),
-                    y: y + self.size.y * theta.sin(),
-                };
-                let projectile_world_pos = bg_map.screen_to_world(projectile_screen_pos);
-                self.projectiles.push(Projectile {
-                    pos: projectile_world_pos,
-                    size: Point { x: 0.0, y: 0.0 },
-                    damage: GUN_PROJECTILE_DAMAGE,
-                    params: params.clone(),
-                });
-                self.time_count = 0.0;
-                //info!("mouse clicked, timecount: {}", self.time_count);
-            }
-        } else {
+            let projectile_world_pos = bg_map.screen_to_world(projectile_screen_pos);
+            self.projectiles.push(Projectile {
+                pos: projectile_world_pos,
+                size: Point { x: 0.0, y: 0.0 },
+                damage: GUN_PROJECTILE_DAMAGE,
+                params: params.clone(),
+            });
+            self.time_count = 0.0;
         }
 
         self.time_count += get_frame_time();

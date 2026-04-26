@@ -8,58 +8,38 @@ use crate::run_state::RunState;
 
 pub struct MainMenu {
     pub play: bool,
-    pub options: Options,
     pub quit: bool,
-    pub here: bool,
+    pub options: bool,
     pub width: f32,
     pub height: f32,
+    here: MainMenuScreen,
 }
 
-pub struct Options {
-    pub keyboard_to_shoot: bool,
-    pub here: bool,
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum MainMenuScreen {
+    Main,
+    Options,
 }
 
 impl MainMenu {
     pub fn initialize() -> MainMenu {
         return MainMenu {
             play: false, 
-            options: Options { keyboard_to_shoot: false , here: false}, 
             quit: false, 
-            here: true,
+            options: false,
             width: 300.0,
             height: 250.0,
+            here: MainMenuScreen::Main,
         }
     }
 
-    pub fn draw(&mut self, ui_skins: &UiSkins) {
+    pub fn draw(&mut self) {
         let size = root_ui().calc_size(&GAME_TITLE);
         root_ui().label(vec2(WINDOW_WIDTH / 2.0 - size.x / 2.0, 120.), GAME_TITLE);
-        if self.here {
-            self.draw_main_menu();
-        } else {
-            if self.options.here {
-                self.draw_options_menu(ui_skins);
-            }
+        match self.here {
+            MainMenuScreen::Main => self.draw_main_menu(),
+            MainMenuScreen::Options => self.draw_options_menu(),
         }
-    }
-
-    fn draw_options_menu(&mut self,  ui_skins: &UiSkins) {
-        root_ui().window(hash!(), 
-        vec2(WINDOW_WIDTH / 2.0  - self.width/2.0, WINDOW_HEIGHT / 2.0 - self.height / 2.0 + 20.), 
-        vec2(self.width, self.height), 
-        |ui| {
-            ui.push_skin(&ui_skins.small_label);
-            widgets::Checkbox::new(hash!())
-                .pos(vec2(-70.0, 50.0))
-                .label("keyb to shoot")
-                .ui(ui, &mut self.options.keyboard_to_shoot);
-            ui.pop_skin();
-            self.options.here = !widgets::Button::new("Back")
-                .position(vec2(75.0, 150.0))
-                .ui(ui);
-            self.here = !self.options.here;
-        });
     }
 
     fn draw_main_menu(&mut self) {
@@ -70,13 +50,31 @@ impl MainMenu {
             self.play = widgets::Button::new("Play")
                 .position(vec2(75.0, 30.0))
                 .ui(ui);
-            self.here = !widgets::Button::new("Options")
-                .position(vec2(50.0, 100.0))
+            self.options = widgets::Button::new("Options")
+                .position(vec2(55.0, 100.0))
                 .ui(ui);
-            self.options.here = !self.here;
             self.quit = widgets::Button::new("Quit")
                 .position(vec2(75.0, 170.0))
                 .ui(ui);
+            if self.options {
+                self.here = MainMenuScreen::Options;
+            }
+        });
+    }
+
+    fn draw_options_menu(&mut self) {
+        root_ui().window(hash!(), 
+        vec2(WINDOW_WIDTH / 2.0  - self.width/2.0, WINDOW_HEIGHT / 2.0 - self.height / 2.0 + 20.), 
+        vec2(self.width, self.height), |ui| {
+
+            let back = widgets::Button::new("Back")
+                .position(vec2(75.0, 170.0))
+                .ui(ui);
+
+            if back {
+                self.options = false;
+                self.here = MainMenuScreen::Main;
+            }
         });
     }
 }
@@ -304,44 +302,6 @@ pub fn draw_health_bar(player: &Player) {
         rotation: 0.0,
         color: Color { r: 0.55, g: 0.16, b: 0.16, a: 1.  },
     });
-}
-
-pub struct UiSkins {
-    pub small_label: Skin,
-}
-
-impl UiSkins {
-    pub fn new(font: &Font) -> Self {
-
-        let small_label_style = root_ui()
-            .style_builder()
-            .with_font(font)
-            .unwrap()
-            .font_size(25) 
-            .text_color(Color::from_rgba(180, 180, 120, 255))
-            .build();
-
-        let selected_color = Color::from_rgba(170, 80, 80, 255);
-        let hovered_color = Color::from_rgba(180, 120, 80, 255);
-
-        let small_checkbox_style = root_ui()
-            .style_builder()
-            .color_selected(selected_color)
-            .color_hovered(hovered_color)
-            .color_clicked(selected_color)
-            .color_selected_hovered(hovered_color)
-            .build();
-
-        let small_label_skin = Skin {
-            label_style: small_label_style.clone(),
-            checkbox_style: small_checkbox_style.clone(),
-            ..root_ui().default_skin()
-        };
-
-        Self {
-            small_label: small_label_skin,
-        }
-    }
 }
 
 pub async fn get_menu_skin(font : &Font) -> Skin {

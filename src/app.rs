@@ -13,7 +13,7 @@ use crate::items::ItemGenerator;
 use crate::player::Player;
 use crate::run_state::RunState;
 use crate::user_interface;
-use crate::user_interface::{get_menu_skin, UiSkins};
+use crate::user_interface::get_menu_skin;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Screen {
@@ -37,7 +37,6 @@ pub struct App {
     run_state: RunState,
     font: Font,
     _main_menu_ui: macroquad::ui::Skin,
-    ui_skins: UiSkins,
     screen: Screen,
     quit_requested: bool,
 }
@@ -72,8 +71,6 @@ impl App {
 
         let font = user_interface::initialize_font().await;
         let main_menu_ui = get_menu_skin(&font).await;
-        let ui_skins = user_interface::UiSkins::new(&font);
-
         root_ui().push_skin(&main_menu_ui);
 
         Some(Self {
@@ -89,7 +86,6 @@ impl App {
             run_state: RunState::new(),
             font,
             _main_menu_ui: main_menu_ui,
-            ui_skins,
             screen: Screen::MainMenu,
             quit_requested: false,
         })
@@ -189,7 +185,7 @@ impl App {
 
     fn draw_main_menu(&mut self) {
         self.bg_map.draw();
-        self.main_menu.draw(&self.ui_skins);
+        self.main_menu.draw();
 
         if self.main_menu.play {
             self.screen = Screen::Playing;
@@ -207,11 +203,7 @@ impl App {
 
         self.bg_map.draw();
         self.player.draw(paused);
-        self.player_gun.draw_gun(
-            &self.bg_map,
-            paused,
-            self.main_menu.options.keyboard_to_shoot,
-        );
+        self.player_gun.draw_gun(&self.bg_map, paused);
         self.player_gun.draw_projectiles(&self.bg_map);
         self.item_generator.draw(&self.bg_map);
         for enemy in self.enemies_generator.current_enemies.iter_mut() {
