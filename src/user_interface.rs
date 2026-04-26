@@ -3,6 +3,7 @@ use macroquad::ui::{hash, root_ui, widgets, Skin};
 
 use crate::assets::paths;
 use crate::global_constants::{GAME_TITLE, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::input::AimMode;
 use crate::player::Player;
 use crate::run_state::RunState;
 
@@ -10,6 +11,7 @@ pub struct MainMenu {
     pub play: bool,
     pub quit: bool,
     pub options: bool,
+    pub aim_mode: AimMode,
     pub width: f32,
     pub height: f32,
     here: MainMenuScreen,
@@ -27,6 +29,7 @@ impl MainMenu {
             play: false, 
             quit: false, 
             options: false,
+            aim_mode: AimMode::Mouse,
             width: 300.0,
             height: 250.0,
             here: MainMenuScreen::Main,
@@ -66,6 +69,28 @@ impl MainMenu {
         root_ui().window(hash!(), 
         vec2(WINDOW_WIDTH / 2.0  - self.width/2.0, WINDOW_HEIGHT / 2.0 - self.height / 2.0 + 20.), 
         vec2(self.width, self.height), |ui| {
+
+            ui.label(vec2(55.0, 30.0), "Aim Direction");
+
+            if widgets::Button::new("Mouse")
+                .position(vec2(40.0, 80.0))
+                .ui(ui)
+            {
+                self.aim_mode = AimMode::Mouse;
+            }
+
+            if widgets::Button::new("Keyboard")
+                .position(vec2(150.0, 80.0))
+                .ui(ui)
+            {
+                self.aim_mode = AimMode::Keyboard;
+            }
+
+            let selected_mode = match self.aim_mode {
+                AimMode::Mouse => "Selected: Mouse",
+                AimMode::Keyboard => "Selected: Keyboard",
+            };
+            ui.label(vec2(45.0, 125.0), selected_mode);
 
             let back = widgets::Button::new("Back")
                 .position(vec2(75.0, 170.0))

@@ -203,7 +203,8 @@ impl App {
 
         self.bg_map.draw();
         self.player.draw(paused);
-        self.player_gun.draw_gun(&self.bg_map, paused);
+        self.player_gun
+            .draw_gun(&self.bg_map, paused, self.main_menu.aim_mode);
         self.player_gun.draw_projectiles(&self.bg_map);
         self.item_generator.draw(&self.bg_map);
         for enemy in self.enemies_generator.current_enemies.iter_mut() {

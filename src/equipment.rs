@@ -1,8 +1,11 @@
 use crate::{
-    custom::Point, global_constants::GUN_PROJECTILE_DAMAGE, input, player::Player, BackgroundMap,
+    custom::Point,
+    global_constants::GUN_PROJECTILE_DAMAGE,
+    input::{self, AimMode},
+    player::Player,
+    BackgroundMap,
 };
 use macroquad::prelude::*;
-use std::f32::consts::PI;
 
 pub struct Projectile {
     pub pos: Point,
@@ -20,6 +23,7 @@ pub struct Gun {
     pub projectile_texture: Option<Texture2D>,
     rate_of_fire: f32,
     time_count: f32,
+    aim_direction: Point,
 }
 
 impl Gun {
@@ -43,6 +47,7 @@ impl Gun {
             projectiles: vec![],
             texture: None,
             projectile_texture: None,
+            aim_direction: Point { x: 1.0, y: 0.0 },
         };
 
         match projectile_texture {
@@ -76,7 +81,7 @@ impl Gun {
         });
     }
 
-    pub fn draw_gun(&mut self, bg_map: &BackgroundMap, pause: bool) {
+    pub fn draw_gun(&mut self, bg_map: &BackgroundMap, pause: bool, aim_mode: AimMode) {
         //draw gun
         self.size.x = self.size.x * 1.2;
         self.size.y = self.size.y / 4.0;
@@ -92,16 +97,15 @@ impl Gun {
         let mut x: f32 = self.pos.x + (self.size.x / 2.0);
         let mut y = self.pos.y + self.size.y / 2.0;
 
-        let point_to_pos = input::get_cursor_pos();
-        let dis =
-            f32::sqrt(f32::powf(point_to_pos.x - x, 2.0) + f32::powf(point_to_pos.y - y, 2.0));
-        let mut theta = ((point_to_pos.y - y) / dis).acos();
+        let aim_direction = match aim_mode {
+            AimMode::Mouse => input::get_cursor_pos() - Point { x, y },
+            AimMode::Keyboard => input::get_keyboard_aim_direction().unwrap_or(self.aim_direction),
+        };
 
-        if point_to_pos.x < x {
-            theta = PI / 2.0 + theta;
-        } else {
-            theta = PI / 2.0 - theta;
+        if aim_direction.x != 0.0 || aim_direction.y != 0.0 {
+            self.aim_direction = aim_direction;
         }
+        let theta = self.aim_direction.y.atan2(self.aim_direction.x);
 
         x = x + theta.cos();
         y = y + theta.sin() + self.size.y / 2.0;
