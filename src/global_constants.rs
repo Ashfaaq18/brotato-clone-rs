@@ -9,6 +9,7 @@ pub const GUN_PROJECTILE_SPEED: f32 = 300.0;
 pub const GUN_RATE_OF_FIRE: f32 = 3.0;
 pub const GUN_INITIAL_TIME_COUNT: f32 = 0.0;
 pub const GUN_PROJECTILE_DAMAGE: f32 = 25.0;
+pub const GUN_PROJECTILE_SIZE: f32 = 8.0;
 
 pub const ITEM_SPAWN_FREQUENCY_SECONDS: f32 = 5.0;
 

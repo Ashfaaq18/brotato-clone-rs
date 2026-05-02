@@ -4,7 +4,8 @@ use crate::{
     collision::{aabb_from_pos_size, Collision},
     custom::Point,
     global_constants::{
-        GUN_INITIAL_TIME_COUNT, GUN_PROJECTILE_DAMAGE, GUN_PROJECTILE_SPEED, GUN_RATE_OF_FIRE,
+        GUN_INITIAL_TIME_COUNT, GUN_PROJECTILE_DAMAGE, GUN_PROJECTILE_SIZE, GUN_PROJECTILE_SPEED,
+        GUN_RATE_OF_FIRE,
     },
     input::{self, AimMode},
     player::Player,
@@ -113,7 +114,10 @@ impl Weapon {
 
             Some(Projectile {
                 pos: bg_map.screen_to_world(projectile_screen_pos),
-                size: Point { x: 0.0, y: 0.0 },
+                size: Point {
+                    x: GUN_PROJECTILE_SIZE,
+                    y: GUN_PROJECTILE_SIZE,
+                },
                 damage: self.base_damage,
                 params,
             })

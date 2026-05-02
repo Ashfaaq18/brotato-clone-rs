@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use crate::{
     assets::SpriteSheetSpec,
     background_map::BackgroundMap,
@@ -129,14 +127,9 @@ impl Enemy {
     pub fn chase(&mut self, player: &Player, bg_map: &BackgroundMap) {
         let player_world_pos = player.world_pos(bg_map);
 
-        let mut theta =
-            ((player_world_pos.y - self.pos.y) / (player_world_pos.x - self.pos.x)).atan();
-        if player_world_pos.x - self.pos.x < 0.0 {
-            theta = theta - PI;
-            self.flip_x = true;
-        } else {
-            self.flip_x = false;
-        }
+        let theta = (player_world_pos.y - self.pos.y)
+            .atan2(player_world_pos.x - self.pos.x);
+        self.flip_x = player_world_pos.x < self.pos.x;
 
         self.pos = Point {
             x: self.pos.x + self.speed * get_frame_time() * theta.cos(),
