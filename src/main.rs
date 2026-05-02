@@ -14,6 +14,7 @@ mod items;
 mod player;
 mod run_state;
 mod settings;
+mod shop;
 mod user_interface;
 
 use app::App;

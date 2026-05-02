@@ -156,7 +156,9 @@ impl App {
 
     fn draw_wave_shop_menu(&mut self) {
         user_interface::draw_opaque_background();
-        self.wave_shop_menu.draw(self.game_run.run_state());
+        if let Some(upgrade) = self.wave_shop_menu.draw(self.game_run.run_state()) {
+            self.game_run.apply_upgrade(upgrade);
+        }
 
         if self.wave_shop_menu.continue_run {
             self.game_run.start_next_wave();

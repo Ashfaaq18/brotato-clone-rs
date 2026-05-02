@@ -9,6 +9,7 @@ use crate::items::ItemGenerator;
 use crate::player::Player;
 use crate::run_state::RunState;
 use crate::settings::Settings;
+use crate::shop::{UpgradeKind, UPGRADES};
 use crate::user_interface;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -134,5 +135,22 @@ impl GameRun {
 
     pub fn run_state(&self) -> &RunState {
         &self.run_state
+    }
+
+    pub fn apply_upgrade(&mut self, kind: UpgradeKind) {
+        let cost = UPGRADES
+            .iter()
+            .find(|u| u.kind == kind)
+            .map(|u| u.cost)
+            .unwrap_or(0);
+        if !self.run_state.spend_materials(cost) {
+            return;
+        }
+        match kind {
+            UpgradeKind::Heal => self.player.heal(30.0),
+            UpgradeKind::Speed => self.player.upgrade_speed(15.0),
+            UpgradeKind::Damage => self.combat.upgrade_damage(10.0),
+            UpgradeKind::FireRate => self.combat.upgrade_fire_rate(1.0),
+        }
     }
 }

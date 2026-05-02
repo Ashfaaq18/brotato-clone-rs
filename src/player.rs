@@ -138,6 +138,14 @@ impl Player {
         self.hp <= 0.
     }
 
+    pub fn heal(&mut self, amount: f32) {
+        self.hp = (self.hp + amount).min(100.0);
+    }
+
+    pub fn upgrade_speed(&mut self, delta: f32) {
+        self.mov.speed += delta;
+    }
+
     pub fn world_pos(&self, map: &BackgroundMap) -> Point {
         map.screen_to_world(self.pos)
     }

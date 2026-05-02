@@ -49,6 +49,14 @@ impl Combat {
         &mut self.projectiles
     }
 
+    pub fn upgrade_fire_rate(&mut self, delta: f32) {
+        self.weapon.rate_of_fire += delta;
+    }
+
+    pub fn upgrade_damage(&mut self, delta: f32) {
+        self.weapon.base_damage += delta;
+    }
+
     pub fn clear(&mut self) {
         self.projectiles.clear();
     }
@@ -61,6 +69,7 @@ pub struct Weapon {
     rate_of_fire: f32,
     time_count: f32,
     aim_direction: Point,
+    base_damage: f32,
 }
 
 impl Weapon {
@@ -74,6 +83,7 @@ impl Weapon {
             time_count,
             texture: None,
             aim_direction: Point { x: 1.0, y: 0.0 },
+            base_damage: GUN_PROJECTILE_DAMAGE,
         };
 
         match texture {
@@ -104,7 +114,7 @@ impl Weapon {
             Some(Projectile {
                 pos: bg_map.screen_to_world(projectile_screen_pos),
                 size: Point { x: 0.0, y: 0.0 },
-                damage: GUN_PROJECTILE_DAMAGE,
+                damage: self.base_damage,
                 params,
             })
         } else {

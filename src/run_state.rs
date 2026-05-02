@@ -48,6 +48,15 @@ impl RunState {
         (WAVE_DURATION_SECONDS - self.wave_elapsed).max(0.0)
     }
 
+    pub fn spend_materials(&mut self, cost: i32) -> bool {
+        if self.materials >= cost {
+            self.materials -= cost;
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn reset(&mut self) {
         *self = Self::new();
     }

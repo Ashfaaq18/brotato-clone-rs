@@ -7,6 +7,7 @@ use crate::input::AimMode;
 use crate::player::Player;
 use crate::run_state::RunState;
 use crate::settings::Settings;
+use crate::shop::{UpgradeKind, UPGRADES};
 
 pub struct MainMenu {
     pub play: bool,
@@ -211,38 +212,66 @@ impl WaveShopMenu {
         self.quit = false;
     }
 
-    pub fn draw(&mut self, run_state: &RunState) {
-        let width = 360.0;
-        let height = 300.0;
-        let title = format!("Wave {} Complete", run_state.wave);
-        let size = root_ui().calc_size(&title);
-        root_ui().label(vec2(WINDOW_WIDTH / 2.0 - size.x / 2.0, 110.), &title);
+    pub fn draw(&mut self, run_state: &RunState) -> Option<UpgradeKind> {
+        let width = 460.0;
+        let height = 380.0;
+        let title = format!("Wave {} Complete!", run_state.wave);
+        let title_size = root_ui().calc_size(&title);
+        root_ui().label(vec2(WINDOW_WIDTH / 2.0 - title_size.x / 2.0, 85.), &title);
+
+        let mut clicked: Option<UpgradeKind> = None;
+        let mut btn = [false; 4];
+
         root_ui().window(
             hash!(),
             vec2(
                 WINDOW_WIDTH / 2.0 - width / 2.0,
-                WINDOW_HEIGHT / 2.0 - height / 2.0 + 35.,
+                WINDOW_HEIGHT / 2.0 - height / 2.0 + 30.,
             ),
             vec2(width, height),
             |ui| {
                 ui.label(
-                    vec2(70.0, 30.0),
+                    vec2(20.0, 8.0),
                     &format!("Materials: {}", run_state.materials),
                 );
 
+                // 2x2 upgrade grid
+                let cols = [10.0_f32, 240.0_f32];
+                for (i, upgrade) in UPGRADES.iter().enumerate() {
+                    let col = cols[i % 2];
+                    let row_y = if i < 2 { 40.0 } else { 130.0 };
+                    let label = format!("{} ({} mats)", upgrade.name, upgrade.cost);
+                    btn[i] = widgets::Button::new(label.as_str())
+                        .position(vec2(col, row_y))
+                        .size(vec2(210.0, 45.0))
+                        .ui(ui);
+                    ui.label(vec2(col, row_y + 50.0), upgrade.description);
+                }
+
                 self.continue_run = widgets::Button::new("Continue")
-                    .position(vec2(70.0, 95.0))
+                    .position(vec2(105.0, 215.0))
+                    .size(vec2(250.0, 45.0))
                     .ui(ui);
 
                 self.mainmenu = widgets::Button::new("Main Menu")
-                    .position(vec2(55.0, 165.0))
+                    .position(vec2(85.0, 275.0))
+                    .size(vec2(290.0, 45.0))
                     .ui(ui);
 
                 self.quit = widgets::Button::new("Quit")
-                    .position(vec2(95.0, 235.0))
+                    .position(vec2(150.0, 335.0))
+                    .size(vec2(160.0, 40.0))
                     .ui(ui);
             },
         );
+
+        for (i, was_clicked) in btn.iter().enumerate() {
+            if *was_clicked {
+                clicked = Some(UPGRADES[i].kind);
+                break;
+            }
+        }
+        clicked
     }
 }
 
